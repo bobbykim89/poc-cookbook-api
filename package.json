@@ -1,0 +1,43 @@
+{
+  "name": "poc-cookbook-api",
+  "version": "1.0.0",
+  "description": "Serverless lambda function for API endpoint of cookbook blog app",
+  "private": false,
+  "author": {
+    "name": "Bobby Kim",
+    "url": "https://github.com/bobbykim89"
+  },
+  "scripts": {
+    "watch": "tsc -w",
+    "deploy": "tsc && serverless deploy",
+    "commit": "cz",
+    "test": "serverless-bundle test"
+  },
+  "dependencies": {
+    "aws-jwt-verify": "^3.2.0",
+    "cloudinary": "^1.33.0",
+    "express": "^4.17.1",
+    "express-validator": "^6.14.2",
+    "multer": "^1.4.5-lts.1",
+    "serverless-http": "^2.7.0",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "@aws-sdk/types": "^3.226.0",
+    "@types/express": "^4.17.15",
+    "@types/multer": "^1.4.7",
+    "@types/node": "^18.11.18",
+    "@types/uuid": "^9.0.0",
+    "aws-sdk": "^2.1282.0",
+    "commitizen": "^4.2.6",
+    "cz-conventional-changelog": "^3.3.0",
+    "serverless-bundle": "^5.5.0",
+    "serverless-dotenv-plugin": "^4.0.2",
+    "typescript": "^4.9.4"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  }
+}

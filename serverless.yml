@@ -1,0 +1,133 @@
+org: bobbykim89
+app: poc-cookbook-api
+service: poc-cookbook-api
+frameworkVersion: "3"
+
+custom:
+  userTable: "user-table-${sls:stage}"
+  postTable: "post-table-${sls:stage}"
+  commentTable: "comment-table-${sls:stage}"
+  categoryTable: "category-table-${sls:stage}"
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+            - cognito-idp:AdminInitiateAuth
+            - cognito-idp:AdminCreateUser
+            - cognito-idp:AdminSetUserPassword
+            - cognito-idp:AdminGetUser
+          Resource:
+            - Fn::GetAtt: [UserTable, Arn]
+            - Fn::GetAtt: [PostTable, Arn]
+            - Fn::GetAtt: [CommentTable, Arn]
+            - Fn::GetAtt: [CategoryTable, Arn]
+            - Fn::GetAtt: [UserPool, Arn]
+
+  environment:
+    USER_TABLE: ${self:custom.userTable}
+    POST_TABLE: ${self:custom.postTable}
+    COMMENT_TABLE: ${self:custom.commentTable}
+    CATEGORY_TABLE: ${self:custom.categoryTable}
+    USER_POOL_ID: { Ref: UserPool }
+    CLIENT_ID: { Ref: UserClient }
+  httpApi:
+    cors: true
+
+functions:
+  api:
+    handler: dist/handler.handler
+    events:
+      - httpApi: "*"
+
+package:
+  excludeDevDependencies: true
+  patterns:
+    - "!src/**"
+
+resources:
+  Resources:
+    UserTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.userTable}
+    PostTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: postId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: postId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.postTable}
+    CommentTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: commentId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: commentId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.commentTable}
+    CategoryTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: categoryId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: categoryId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.categoryTable}
+    UserPool:
+      Type: AWS::Cognito::UserPool
+      Properties:
+        UserPoolName: poc-cookbook-api-user-pool
+        Schema:
+          - Name: email
+            Required: true
+            Mutable: true
+        Policies:
+          PasswordPolicy:
+            MinimumLength: 8
+            RequireLowercase: true
+            RequireNumbers: true
+            RequireUppercase: true
+            RequireSymbols: true
+        AutoVerifiedAttributes: ["email"]
+    UserClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties:
+        ClientName: poc-cookbook-api-user-pool-ui
+        GenerateSecret: false
+        UserPoolId: { Ref: UserPool }
+        AccessTokenValidity: 24
+        IdTokenValidity: 24
+        ExplicitAuthFlows:
+          ["ALLOW_ADMIN_USER_PASSWORD_AUTH", "ALLOW_REFRESH_TOKEN_AUTH"]
+
+plugins:
+  - serverless-bundle
+  - serverless-dotenv-plugin
