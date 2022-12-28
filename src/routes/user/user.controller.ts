@@ -21,6 +21,9 @@ export class UserController {
           TableName: USER_TABLE,
         })
         .promise();
+      if (!Items) {
+        return res.status(404).json({ message: "Could not find user table" });
+      }
       return res.status(200).json(Items);
     } catch (err) {
       return res.status(500).json({
@@ -42,13 +45,12 @@ export class UserController {
           },
         })
         .promise();
-      if (Item) {
-        return res.status(200).json(Item);
-      } else {
+      if (!Item) {
         return res
           .status(404)
           .json({ message: "Could not find user with provided user id" });
       }
+      return res.status(200).json(Item);
     } catch (err) {
       return res
         .status(500)
@@ -69,7 +71,7 @@ export class UserController {
           },
         })
         .promise();
-      if (Item) {
+      if (!Item) {
         return res.status(400).json({
           error: "Could not find user with provided email address",
         });

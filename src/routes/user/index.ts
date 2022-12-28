@@ -2,7 +2,7 @@ import express from "express";
 import { check } from "express-validator";
 
 // import middleware
-import { Auth } from "@/middleware";
+import { Auth, upload } from "@/middleware";
 
 // import controller
 import { UserController } from "./user.controller";
@@ -28,6 +28,11 @@ router.post(
   ],
   userController.createNewUser
 );
-router.patch("/:routerId", Auth, userController.patchUserById);
+router.patch(
+  "/:routerId",
+  Auth,
+  upload.single("image"),
+  userController.patchUserById
+);
 
 export { router as UserRouter };
