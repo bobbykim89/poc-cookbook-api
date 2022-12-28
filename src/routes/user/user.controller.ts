@@ -168,10 +168,17 @@ export class UserController {
           },
         })
         .promise();
+      // invalidate if user profile doesn't exist
       if (!Item) {
         return res
           .status(404)
           .json({ message: "Could not find user with provided user id" });
+      }
+      // invalidate if user is not the owner of profile
+      if (Item.userId !== `User-${email}`) {
+        return res.status(403).json({
+          message: "Unauthorized",
+        });
       }
       let dataObject: PatchUserReq;
       if (req.file) {
