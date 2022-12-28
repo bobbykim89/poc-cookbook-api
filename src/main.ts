@@ -3,6 +3,8 @@ import express, { Response } from "express";
 // routes
 import { UserRouter } from "@/routes/user";
 import { AuthRouter } from "@/routes/auth";
+import { PostController } from "@/routes/post";
+import { CategoryRouter } from "@/routes/category";
 
 // initialize express app
 const app = express();
@@ -17,6 +19,8 @@ app.get("/", (_, res: Response) => {
 // define routes
 app.use("/user", UserRouter);
 app.use("/auth", AuthRouter);
+app.use("/post", PostController);
+app.use("/category", CategoryRouter);
 
 app.use((_, res: Response) => {
   return res.status(404).json({
