@@ -178,7 +178,7 @@ export class UserController {
         }
         const { public_id, secure_url } = await Cloudinary.uploader.upload(
           req.file.path,
-          { folder: "poc-cookbook-api" }
+          { folder: "poc-cookbook-api/profile" }
         );
         dataObject = {
           userName,
