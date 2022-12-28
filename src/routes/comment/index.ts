@@ -11,7 +11,15 @@ const router = express.Router()
 const commentController = new CommentController()
 
 router.get('/:postId', commentController.getCommentByPostId)
-router.post('/', Auth, commentController.postNewComment)
+router.post(
+  '/',
+  Auth,
+  [
+    check('text').isString().not().isEmpty(),
+    check('postId').isString().not().isEmpty(),
+  ],
+  commentController.postNewComment
+)
 router.delete('/:commentId', Auth, commentController.delecteCommentById)
 
 export { router as CommentRouter }
