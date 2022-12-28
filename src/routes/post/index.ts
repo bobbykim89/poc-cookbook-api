@@ -13,6 +13,7 @@ router.get('/', postController.getAllPost)
 router.get('/:postId', postController.getPostById)
 router.get('/user/:userId', postController.getPostByUser)
 router.get('/me', Auth, postController.getPostByCurrentUser)
+router.get('/category/:categoryId', postController.getPostByCategory)
 router.post(
   '/',
   Auth,
@@ -25,5 +26,12 @@ router.post(
   ],
   postController.createNewPost
 )
+router.patch(
+  '/:postId',
+  Auth,
+  upload.single('image'),
+  postController.patchPostById
+)
+router.delete('/:postId', Auth, postController.deletePostById)
 
 export { router as PostController }

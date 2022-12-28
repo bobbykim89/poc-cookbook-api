@@ -4,12 +4,13 @@ import { validationResult } from 'express-validator'
 import { v4 as uuid } from 'uuid'
 
 // import dto
-import { CreatePostReq } from './dto'
+import { CreatePostReq, PatchPostReq } from './dto'
 
 // import middleware
 import { Cloudinary } from '@/middleware'
 
 const POST_TABLE = process.env.POST_TABLE as string
+const COMMENT_TABLE = process.env.COMMENT_TABLE as string
 const dynamoDbClient = new AWS.DynamoDB.DocumentClient()
 
 export class PostController {
@@ -101,6 +102,30 @@ export class PostController {
         .json({ error: 'Cannot retrieve post', message: err })
     }
   }
+  public async getPostByCategory(
+    req: Request,
+    res: Response
+  ): Promise<void | Response> {
+    try {
+      const { Items } = await dynamoDbClient
+        .scan({
+          TableName: POST_TABLE,
+          FilterExpression: 'category = :r',
+          ExpressionAttributeValues: { ':r': req.params.categoryId },
+        })
+        .promise()
+      if (!Items) {
+        return res.status(404).json({
+          error: 'Could not find post related to given category id',
+        })
+      }
+      return res.status(200).json(Items)
+    } catch (err) {
+      return res
+        .status(500)
+        .json({ error: 'Cannot retrieve post', message: err })
+    }
+  }
   public async createNewPost(
     req: Request,
     res: Response
@@ -160,9 +185,167 @@ export class PostController {
   public async patchPostById(
     req: Request,
     res: Response
-  ): Promise<void | Response> {}
+  ): Promise<void | Response> {
+    const { title, ingredients, recipe, categoryId } = req.body
+    const { email } = req.user
+    try {
+      const { Item } = await dynamoDbClient
+        .get({
+          TableName: POST_TABLE,
+          Key: {
+            postId: req.params.postId,
+          },
+        })
+        .promise()
+      // invalidate if post doesn't exist
+      if (!Item) {
+        return res
+          .status(404)
+          .json({ message: 'Could not find post with post id provided' })
+      }
+      // invalidate if user is not the author of post
+      if (Item.author !== `User-${email}`) {
+        return res.status(403).json({
+          message: 'Unauthorized',
+        })
+      }
+      let dataObject: PatchPostReq
+      if (req.file) {
+        await Cloudinary.uploader.destroy(Item.imageId)
+        const { public_id, secure_url } = await Cloudinary.uploader.upload(
+          req.file.path,
+          {
+            folder: 'poc-cookbook-api/post',
+          }
+        )
+        dataObject = {
+          title,
+          imageId: public_id,
+          thumbUrl: secure_url.replace(
+            '/upload',
+            '/upload/c_scale,w_250/f_auto'
+          ),
+          imageUrl: secure_url.replace(
+            '/upload',
+            '/upload/c_scale,w_1200/q_auto'
+          ),
+          ingredients,
+          recipe,
+          category: categoryId,
+          updatedAt: Date.now(),
+        }
+      } else {
+        dataObject = {
+          title,
+          ingredients,
+          recipe,
+          category: categoryId,
+          updatedAt: Date.now(),
+        }
+      }
+      const itemKeys = Object.keys(dataObject)
+      const params = {
+        TableName: POST_TABLE,
+        Key: {
+          postId: req.params.postId,
+        },
+        UpdateExpression: `SET ${itemKeys
+          .map((_, index) => `#field${index} = :value${index}`)
+          .join(', ')}`,
+        ExpressionAttributeNames: itemKeys.reduce(
+          (accumulator, key, index) => ({
+            ...accumulator,
+            [`#field${index}`]: key,
+          }),
+          {}
+        ),
+        ExpressionAttributeValues: itemKeys.reduce(
+          (accumulator, key: string, index: number) => ({
+            ...accumulator,
+            [`:value${index}`]: dataObject[key as keyof PatchPostReq],
+          }),
+          {}
+        ),
+        ReturnValues: 'ALL_NEW',
+      }
+      await dynamoDbClient.update(params).promise()
+      const { Item: patchResult } = await dynamoDbClient
+        .get({
+          TableName: POST_TABLE,
+          Key: {
+            postId: req.params.postId,
+          },
+        })
+        .promise()
+      return res.status(200).json(patchResult)
+    } catch (err) {
+      return res
+        .status(500)
+        .json({ message: 'Could not update post', error: err })
+    }
+  }
   public async deletePostById(
     req: Request,
     res: Response
-  ): Promise<void | Response> {}
+  ): Promise<void | Response> {
+    const { email } = req.user
+    try {
+      const { Item } = await dynamoDbClient
+        .get({
+          TableName: POST_TABLE,
+          Key: {
+            postId: req.params.postId,
+          },
+        })
+        .promise()
+      // invalidate if post doesn't exist
+      if (!Item) {
+        return res
+          .status(404)
+          .json({ message: 'Could not find post with post id provided' })
+      }
+      // invalidate if user is not the author of post
+      if (Item.author !== `User-${email}`) {
+        return res.status(403).json({
+          message: 'Unauthorized',
+        })
+      }
+      // delete all comments related to the post
+      const { Items } = await dynamoDbClient
+        .scan({
+          TableName: COMMENT_TABLE,
+          FilterExpression: 'postId = :r',
+          ExpressionAttributeValues: { ':r': req.params.postId },
+        })
+        .promise()
+      if (Items && Items.length > 0) {
+        Items.forEach(async (item) => {
+          await dynamoDbClient
+            .delete({
+              TableName: COMMENT_TABLE,
+              Key: {
+                commentId: item.commentId,
+              },
+            })
+            .promise()
+        })
+      }
+      // delete image from cloudinary
+      await Cloudinary.uploader.destroy(Item.imageId)
+      // delete post
+      await dynamoDbClient
+        .delete({
+          TableName: POST_TABLE,
+          Key: {
+            postId: req.params.postId,
+          },
+        })
+        .promise()
+      return res.status(200).json({ message: 'Successfully deleted the post' })
+    } catch (err) {
+      return res
+        .status(500)
+        .json({ message: 'Could not delete post', error: err })
+    }
+  }
 }
