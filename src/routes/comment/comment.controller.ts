@@ -18,7 +18,7 @@ export class CommentController {
       const { Items } = await dynamoDbClient
         .scan({
           TableName: COMMENT_TABLE,
-          FilterExpression: 'postId = :r',
+          FilterExpression: 'post = :r',
           ExpressionAttributeValues: { ':r': req.params.postId },
         })
         .promise()
@@ -37,14 +37,14 @@ export class CommentController {
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() })
     }
-    const { text, postId } = req.body
+    const { text, post } = req.body
     const { email } = req.user
     const uid = `Comment-${uuid()}`
     try {
       const dataObject: PostCommentReq = {
         commentId: uid,
         author: `User-${email}`,
-        postId,
+        post,
         text,
         createdAt: Date.now(),
       }
@@ -100,7 +100,7 @@ export class CommentController {
         .delete({
           TableName: COMMENT_TABLE,
           Key: {
-            postId: req.params.commentId,
+            commentId: req.params.commentId,
           },
         })
         .promise()

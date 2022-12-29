@@ -1,7 +1,7 @@
 export interface PostCommentReq {
   commentId: string
   author: string
-  postId: string
+  post: string
   text: string
   createdAt: number
 }

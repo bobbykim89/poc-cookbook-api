@@ -12,7 +12,7 @@ const userController = new UserController();
 
 router.get("/", userController.getAllUser);
 router.get("/:userId", userController.getUserById);
-router.get("/me", Auth, userController.getCurrentUser);
+router.get("/current-user/me", Auth, userController.getCurrentUser);
 router.post(
   "/",
   [
@@ -29,7 +29,7 @@ router.post(
   userController.createNewUser
 );
 router.patch(
-  "/:routerId",
+  "/:userId",
   Auth,
   upload.single("image"),
   userController.patchUserById

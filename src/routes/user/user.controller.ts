@@ -210,7 +210,13 @@ export class UserController {
           updatedAt: Date.now(),
         };
       }
-      const itemKeys = Object.keys(dataObject);
+      const itemKeys = Object.keys(dataObject).filter((key) => {
+        return (
+          dataObject[key as keyof PatchUserReq] !== null &&
+          dataObject[key as keyof PatchUserReq] !== undefined &&
+          dataObject[key as keyof PatchUserReq] !== ""
+        );
+      });
       const params = {
         TableName: USER_TABLE,
         Key: {

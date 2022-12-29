@@ -16,7 +16,7 @@ router.post(
   Auth,
   [
     check('text').isString().not().isEmpty(),
-    check('postId').isString().not().isEmpty(),
+    check('post').isString().not().isEmpty(),
   ],
   commentController.postNewComment
 )

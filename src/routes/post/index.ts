@@ -12,7 +12,7 @@ const postController = new PostController()
 router.get('/', postController.getAllPost)
 router.get('/:postId', postController.getPostById)
 router.get('/user/:userId', postController.getPostByUser)
-router.get('/me', Auth, postController.getPostByCurrentUser)
+router.get('/current-user/me', Auth, postController.getPostByCurrentUser)
 router.get('/category/:categoryId', postController.getPostByCategory)
 router.post(
   '/',
