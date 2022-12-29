@@ -134,9 +134,9 @@ export class PostController {
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() })
     }
-    const { title, ingredients, recipe, categoryId } = req.body
+    const { title, ingredients, recipe, category } = req.body
     const { email } = req.user
-    const uid = `Prod-${uuid()}`
+    const uid = `Post-${uuid()}`
     try {
       if (!req.file) {
         return res.status(404).json({ message: 'File not found' })
@@ -149,7 +149,7 @@ export class PostController {
         title,
         postId: uid,
         author: `User-${email}`,
-        category: categoryId,
+        category,
         imageId: public_id,
         thumbUrl: secure_url.replace('/upload', '/upload/c_scale,w_250/f_auto'),
         imageUrl: secure_url.replace(
@@ -186,7 +186,7 @@ export class PostController {
     req: Request,
     res: Response
   ): Promise<void | Response> {
-    const { title, ingredients, recipe, categoryId } = req.body
+    const { title, ingredients, recipe, category } = req.body
     const { email } = req.user
     try {
       const { Item } = await dynamoDbClient
@@ -231,7 +231,7 @@ export class PostController {
           ),
           ingredients,
           recipe,
-          category: categoryId,
+          category,
           updatedAt: Date.now(),
         }
       } else {
@@ -239,11 +239,17 @@ export class PostController {
           title,
           ingredients,
           recipe,
-          category: categoryId,
+          category,
           updatedAt: Date.now(),
         }
       }
-      const itemKeys = Object.keys(dataObject)
+      const itemKeys = Object.keys(dataObject).filter((key) => {
+        return (
+          dataObject[key as keyof PatchPostReq] !== null &&
+          dataObject[key as keyof PatchPostReq] !== undefined &&
+          dataObject[key as keyof PatchPostReq] !== ''
+        )
+      })
       const params = {
         TableName: POST_TABLE,
         Key: {
