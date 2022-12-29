@@ -320,7 +320,7 @@ export class PostController {
       const { Items } = await dynamoDbClient
         .scan({
           TableName: COMMENT_TABLE,
-          FilterExpression: 'postId = :r',
+          FilterExpression: 'post = :r',
           ExpressionAttributeValues: { ':r': req.params.postId },
         })
         .promise()
