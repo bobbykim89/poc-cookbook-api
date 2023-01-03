@@ -151,7 +151,7 @@ export class PostController {
         author: `User-${email}`,
         category,
         imageId: public_id,
-        thumbUrl: secure_url.replace('/upload', '/upload/c_scale,w_250/f_auto'),
+        thumbUrl: secure_url.replace('/upload', '/upload/c_scale,w_400/f_auto'),
         imageUrl: secure_url.replace(
           '/upload',
           '/upload/c_scale,w_1200/q_auto'
@@ -223,7 +223,7 @@ export class PostController {
           imageId: public_id,
           thumbUrl: secure_url.replace(
             '/upload',
-            '/upload/c_scale,w_250/f_auto'
+            '/upload/c_scale,w_400/f_auto'
           ),
           imageUrl: secure_url.replace(
             '/upload',

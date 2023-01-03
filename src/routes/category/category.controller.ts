@@ -27,6 +27,26 @@ export class CategoryController {
         .json({ message: 'Could not retrieve items from table', error: err })
     }
   }
+  public async getCategoryById(
+    req: Request,
+    res: Response
+  ): Promise<void | Response> {
+    try {
+      const { Item } = await dynamoDbClient
+        .get({
+          TableName: CATEGORY_TABLE,
+          Key: {
+            categoryId: req.params.categoryId,
+          },
+        })
+        .promise()
+      return res.status(200).json(Item)
+    } catch (err) {
+      return res
+        .status(500)
+        .json({ message: 'Could not get item from table', error: err })
+    }
+  }
   public async postNewCategory(
     req: Request,
     res: Response
