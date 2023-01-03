@@ -10,6 +10,7 @@ const router = express.Router()
 const categoryController = new CategoryController()
 
 router.get('/', categoryController.getAllCategory)
+router.get('/:categoryId', categoryController.getCategoryById)
 router.post(
   '/',
   Auth,
